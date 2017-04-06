@@ -110,31 +110,34 @@ namespace Mandrill
       data.Key = ApiKey;
       try
       {
-        using (var client = _httpClient ?? new HttpClient())
+        if (_httpClient == null)
         {
-          client.BaseAddress = new Uri(baseUrl);
-
-          string requestContent;
-          try
-          {
-            requestContent = JsonConvert.SerializeObject(data);
-          }
-          catch (JsonException ex)
-          {
-            throw new MandrillSerializeRequestException("Failed to serialize request data.", ex);
-          }
-
-          var response =
-              await
-              client.PostAsync(
-                  path,
-                  new StringContent(requestContent, Encoding.UTF8, "application/json"))
-                  .ConfigureAwait(false);
-
-          var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-          return ParseResponseContent<T>(path, data, responseContent, response);
+            _httpClient = new HttpClient();
         }
+
+         _httpClient.BaseAddress = new Uri(baseUrl);
+
+        string requestContent;
+        try
+        {
+        requestContent = JsonConvert.SerializeObject(data);
+        }
+        catch (JsonException ex)
+        {
+        throw new MandrillSerializeRequestException("Failed to serialize request data.", ex);
+        }
+
+        var response =
+            await
+            _httpClient.PostAsync(
+                path,
+                new StringContent(requestContent, Encoding.UTF8, "application/json"))
+                .ConfigureAwait(false);
+
+        var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        return ParseResponseContent<T>(path, data, responseContent, response);
+        
       }
       catch (TimeoutException ex)
       {
